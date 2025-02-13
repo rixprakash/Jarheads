@@ -63,25 +63,41 @@ To reproduce results:
    ```bash
    pip install -r requirements.txt
    ```
-3. **Run preprocessing script:**
+3. **Preprocess Data:**
    ```bash
    python SCRIPTS/preprocess_data.py
    ```
-4. **Train the model:**
+4. **Extract BERT embeddings (This will generate X_embeddings.npy for later use):**
    ```bash
-   python SCRIPTS/model_training.py
+   python SCRIPTS/extract_embeddings.py
    ```
-5. **Run visualizations and analysis:**
+5. **Train the Models:**
+   - **BERT-Based Classification (Neural Network & Logistic Regression)**
+     ```bash
+     python SCRIPTS/train_model.py
+     ```
+   - **Or run the interactive Jupyter Notebook:**
+     ```bash
+     jupyter notebook SCRIPTS/bert_based_classification.ipynb
+     ```
+
+6. **Predict Genre for a New Song:**
    ```bash
-   jupyter notebook SCRIPTS/visualization.ipynb
+   python SCRIPTS/predict_genre.py
    ```
-6. **View results in the OUTPUT folder.**
+
+7. **Generate Reports & Visualizations:**
+   - Run the visualization notebook:
+     ```bash
+     jupyter notebook SCRIPTS/visualization.ipynb
+     ```
+   - Confusion Matrices, PCA visualization, and Classification Reports can be found in the `OUTPUT/` folder.
 
 ## 📜 License
 This project is licensed under the MIT License. See the `LICENSE.md` file for details.
 
 ## 📚 References
 - Research papers on NLP and song lyric analysis
-- Machine Learning documentation (Scikit-Learn, TensorFlow)
+- Scikit-Learn, TensorFlow, and Hugging Face Transformers documentation
 - GitHub repositories on music genre classification
 
