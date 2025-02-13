@@ -1,7 +1,7 @@
 # 🎵 What Makes a Genre
 
 ## 📌 Overview
-This project analyzes song lyrics using NLP and machine learning to classify genres, predict success, and explore lyrical evolution over time. We use models such as Logistic Regression, SVM, and DistilBERT to identify trends and patterns in song lyrics.
+This project analyzes song lyrics using **Natural Language Processing (NLP)** and **machine learning** to classify music genres based on lyrical content. It leverages **TF-IDF vectorization** and **BERT embeddings** with models like **Logistic Regression** and **Neural Networks** to identify patterns in lyrics.
 
 ## 🛠️ Software & Platforms
 - **Python** (Pandas, NumPy, Scikit-Learn, TensorFlow, Matplotlib, Seaborn)
