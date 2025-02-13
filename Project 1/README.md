@@ -25,6 +25,7 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 │   │── tcc_ceds_music.csv     # Original dataset
 │   │── processed_data.csv     # Cleaned dataset ready for analysis
 │── 📂 OUTPUT/                 # Generated results
+│   │── tfidf_vectorizer.pkl   # Saved TF-IDF model
 │   │── confusion_matrix.png   # Model performance visualization
 │   │── genre_classification_report.pdf  # Analysis report
 │   │── PCA_visualization.png  # Dimensionality reduction visualization
