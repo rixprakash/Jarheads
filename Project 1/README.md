@@ -12,7 +12,7 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 
 ## 📁 Project Structure
 ```
-📂 project_name/
+📂 project 1
 │── 📄 README.md               # Project documentation
 │── 📄 LICENSE.md              # MIT License
 │── 📄 requirements.txt        # List of project dependencies for easy installation
