@@ -15,6 +15,7 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 📂 project_name/
 │── 📄 README.md               # Project documentation
 │── 📄 LICENSE.md              # MIT License
+│── 📄 requirements.txt        # List of project dependencies for easy installation
 │── 📂 SCRIPTS/                # All scripts for analysis
 │   │── preprocess_data.py     # Data cleaning and preprocessing
 │   │── model_training.py      # Machine learning model training
