@@ -12,23 +12,44 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 
 ## 📁 Project Structure
 ```
-📂 project 1
-│── 📄 README.md               # Project documentation
-│── 📄 LICENSE.md              # MIT License
-│── 📄 requirements.txt        # List of project dependencies for easy installation
-│── 📂 SCRIPTS/                # All scripts for analysis
-│   │── preprocess_data.py     # Data cleaning and preprocessing
-│   │── model_training.py      # Machine learning model training
-│   │── visualization.ipynb    # Data visualization and analysis
-│   │── utils.py                # Helper functions
-│── 📂 DATA/                   # Data files
-│   │── tcc_ceds_music.csv     # Original dataset
-│   │── processed_data.csv     # Cleaned dataset ready for analysis
-│── 📂 OUTPUT/                 # Generated results
-│   │── tfidf_vectorizer.pkl   # Saved TF-IDF model
-│   │── confusion_matrix.png   # Model performance visualization
-│   │── genre_classification_report.pdf  # Analysis report
-│   │── PCA_visualization.png  # Dimensionality reduction visualization
+📂 Project 1
+│── 📄 README.md                # Project documentation
+│── 📄 LICENSE.md               # MIT License
+│── 📄 requirements.txt         # List of project dependencies for easy installation
+│
+│── 📂 SCRIPTS/                 # All scripts for analysis
+│   │── preprocess_data.py       # Data cleaning and preprocessing
+│   │── extract_embeddings.py    # Extract BERT embeddings from lyrics
+│   │── train_model.py           # Train machine learning models (LogReg, NN)
+│   │── predict_genre.py         # Predict genre using trained models
+│   │── utils.py                 # Helper functions
+│   │── visualization.ipynb      # Data visualization and analysis
+│   │── bert_based_classification.ipynb  # Jupyter notebook for BERT classification
+│   │── script.ipynb             # Miscellaneous scripts
+│
+│── 📂 DATA/                    # Data files
+│   │── tcc_ceds_music.csv       # Original dataset
+│   │── processed_data.csv       # Cleaned dataset ready for analysis
+│
+│── 📂 OUTPUT/                   # Generated results
+│   │── 📂 confusion matrices using BERT/  # Confusion matrices for BERT-based models
+│   │   │── LR_confusion_matrix_BERT.png  # Logistic Regression (BERT) confusion matrix
+│   │   │── NN_confusion_matrix_BERT.png  # Neural Network (BERT) confusion matrix
+│   │
+│   │── 📂 confusion matrices using TF-IDF/  # Confusion matrices for TF-IDF models
+│   │   │── LR_confusion_matrix_TF-IDF.png  # Logistic Regression (TF-IDF) confusion matrix
+│   │   │── NN_confusion_matrix_TF-IDF.png  # Neural Network (TF-IDF) confusion matrix
+│   │
+│   │── PCA_visualization.png               # PCA visualization of embeddings
+│   │── X_embeddings.npy                     # Saved BERT embeddings
+│   │── genre_classification_report_using_BERT.pdf   # Analysis report (BERT)
+│   │── genre_classification_report_using_TF-IDF.pdf # Analysis report (TF-IDF)
+│   │── label_encoder.pkl                    # Label encoder for genre classification
+│   │── logistic_regression_bert.pkl         # Trained logistic regression model (BERT)
+│   │── neural_network_bert.h5               # Trained neural network model (BERT)
+│   │── tfidf_vectorizer.pkl                 # TF-IDF vectorizer for text features
+│   │── y.npy                                # Encoded genre labels
+
 ```
 
 ## 🔄 Reproducibility
