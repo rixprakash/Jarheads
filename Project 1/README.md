@@ -20,6 +20,7 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 │   │── preprocess_data.py     # Data cleaning and preprocessing
 │   │── model_training.py      # Machine learning model training
 │   │── visualization.ipynb    # Data visualization and analysis
+│   │── utils.py                # Helper functions
 │── 📂 DATA/                   # Data files
 │   │── tcc_ceds_music.csv     # Original dataset
 │   │── processed_data.csv     # Cleaned dataset ready for analysis
