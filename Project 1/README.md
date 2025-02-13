@@ -31,6 +31,8 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 │── 📂 DATA/                    # Data files
 │   │── tcc_ceds_music.csv       # Original dataset
 │   │── processed_data.csv       # Cleaned dataset ready for analysis
+│   │── test_data.csv            # 20% of processed_data that we will use to test
+│   │── train_data.csv           # 80% of processed_data that we will use to train the models
 │
 │── 📂 OUTPUT/                   # Generated results
 │   │── 📂 confusion matrices using BERT/  # Confusion matrices for BERT-based models
