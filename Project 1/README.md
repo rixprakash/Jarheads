@@ -101,4 +101,5 @@ This project is licensed under the MIT License. See the `LICENSE.md` file for de
 - Research papers on NLP and song lyric analysis
 - Scikit-Learn, TensorFlow, and Hugging Face Transformers documentation
 - GitHub repositories on music genre classification
+- https://data.mendeley.com/datasets/3t9vbwxgr5/2
 
