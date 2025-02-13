@@ -18,6 +18,7 @@ This project analyzes song lyrics using NLP and machine learning to classify gen
 │── 📄 requirements.txt         # List of project dependencies for easy installation
 │
 │── 📂 SCRIPTS/                 # All scripts for analysis
+│   │── train_test_split.ipynb   # generate two new files: train_data.csv and test_data.csv, with 80% and 20% of the original data
 │   │── preprocess_data.py       # Data cleaning and preprocessing
 │   │── extract_embeddings.py    # Extract BERT embeddings from lyrics
 │   │── train_model.py           # Train machine learning models (LogReg, NN)
