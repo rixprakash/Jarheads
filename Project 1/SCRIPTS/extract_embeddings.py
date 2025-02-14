@@ -25,7 +25,7 @@ torch.cuda.empty_cache()
 ##############################
 def load_data():
     """Loads the processed dataset from GitHub."""
-    GITHUB_CSV_URL = "https://raw.githubusercontent.com/rixprakash/Jarheads/main/Project%201/DATA/processed_data.csv"
+    GITHUB_CSV_URL = "https://raw.githubusercontent.com/rixprakash/Jarheads/main/Project%201/DATA/train_data.csv"
     df = pd.read_csv(GITHUB_CSV_URL)
     return df
 
