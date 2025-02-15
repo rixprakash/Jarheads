@@ -1,3 +1,19 @@
+"""
+This script trains two traditional machine learning models (Logistic Regression and a Neural Network)
+on pre-extracted BERT embeddings for genre classification.
+
+Workflow:
+1. Downloads precomputed BERT embeddings (`X_embeddings.npy`), labels (`y.npy`), and the label encoder.
+2. Splits the dataset into training and testing sets (80/20 split).
+3. Trains a Logistic Regression model and evaluates it on the test set.
+4. Trains a Neural Network model with multiple dense layers and dropout regularization.
+5. Generates classification reports and confusion matrices to evaluate model performance.
+6. Saves both trained models for future inference.
+
+This script is useful for quickly training and evaluating lightweight ML models without the need
+to fine-tune BERT directly.
+"""
+
 import numpy as np
 import joblib
 import tensorflow as tf
