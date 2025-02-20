@@ -1,7 +1,9 @@
 # 🎵 What Makes a Genre
 
 ## 📌 Overview
-This project analyzes song lyrics using **Natural Language Processing (NLP)** and **machine learning** to classify music genres based on lyrical content. It leverages **TF-IDF vectorization** and **BERT embeddings** with models like **Logistic Regression** and **Neural Networks** to identify patterns in lyrics.
+This project explores the possibility of classifying music genres solely based on song lyrics using **Natural Language Processing (NLP)** and **Machine Learning** techniques. We used two main approaches:
+1. **Traditional ML Models:** TF-IDF vectorization with Logistic Regression and Neural Networks.
+2. **Deep Learning Models:** BERT embeddings fine-tuned for genre classification.
 
 ## 🛠️ Software & Platforms
 - **Python** (Pandas, NumPy, Scikit-Learn, TensorFlow, Matplotlib, Seaborn)
@@ -77,7 +79,6 @@ This project analyzes song lyrics using **Natural Language Processing (NLP)** an
 ```
 
 ## 🔄 Reproducibility
-To reproduce results:
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/rixprakash/Jarheads.git
@@ -91,30 +92,25 @@ To reproduce results:
    ```bash
    python SCRIPTS/preprocess_data.py
    ```
-4. **Extract BERT embeddings (This will generate X_embeddings.npy for later use):**
+4. **Extract BERT Embeddings:**
    ```bash
    python SCRIPTS/extract_embeddings.py
    ```
 5. **Train the Models:**
-   - **BERT-Based Classification (Neural Network & Logistic Regression)**
+   - **Traditional ML Models:**
      ```bash
-     python SCRIPTS/train_model.py
+     python SCRIPTS/train_ml_models.py
      ```
-   - **Or run the interactive Jupyter Notebook:**
+   - **Fine-tune BERT Model:**
      ```bash
-     jupyter notebook SCRIPTS/bert_based_classification.ipynb
+     python SCRIPTS/train_bert_model.py
      ```
-
-6. **Predict Genre for a New Song:**
+6. **Visualizations:**
    ```bash
-   python SCRIPTS/predict_genre.py
+   jupyter notebook SCRIPTS/visualizations_for_bert_model_performance.ipynb
    ```
 
-7. **Generate Reports & Visualizations:**
-   - Run the visualization notebook:
-     ```bash
-     jupyter notebook SCRIPTS/visualization.ipynb
-     ```
+---
    - Confusion Matrices, PCA visualization, and Classification Reports can be found in the `OUTPUT/` folder.
 
 ## 📜 License
