@@ -1,15 +1,14 @@
 """
-06_model_evaluation.py
+05_advanced_models.py
 
-This script compares all trained models for SPY price prediction, evaluates
-their performance, and creates visualizations to test the project's hypothesis.
-It also analyzes model behavior during different market conditions.
+This script trains advanced machine learning models for SPY price prediction using
+both SPY and VIX historical data with engineered features. It focuses on tree-based
+algorithms which can capture non-linear relationships in the data.
 
-Functions:
-- Load and compare all model results
-- Generate comprehensive comparison visualizations
-- Analyze model performance in high volatility vs. low volatility periods
-- Evaluate the hypothesis that VIX improves forecasting accuracy
+Models trained:
+- Random Forest Regressor
+- XGBoost Regressor
+- Ensemble model (combining multiple predictions)
 
 Author: JARHeads Team
 Date: March 2025
@@ -21,8 +20,11 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
-import pickle
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+import xgboost as xgb
+import pickle
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -30,425 +32,317 @@ warnings.filterwarnings('ignore')
 os.makedirs('OUTPUT/model_results', exist_ok=True)
 os.makedirs('OUTPUT/figures', exist_ok=True)
 
-# Load the feature-engineered data and predictions
-print("Loading data and model predictions...")
-
-try:
-    # Load feature data for testing set
-    df = pd.read_csv('DATA/processed/feature_data.csv')
-    df['Date'] = pd.to_datetime(df['Date'])
+# Function to evaluate model performance (same as in baseline script for consistency)
+def evaluate_model(y_true, y_pred, model_name):
+    """Calculate and return model performance metrics."""
+    mae = mean_absolute_error(y_true, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    r2 = r2_score(y_true, y_pred)
     
-    # Get the test set (last 20% of data)
-    train_size = int(0.8 * len(df))
-    test_df = df.iloc[train_size:]
+    # Directional accuracy (up/down prediction)
+    direction_true = (y_true > 0).astype(int)
+    direction_pred = (y_pred > 0).astype(int)
+    directional_accuracy = (direction_true == direction_pred).mean()
     
-    # Load model metrics if available
-    baseline_metrics = pd.read_csv('OUTPUT/model_results/baseline_metrics.csv')
-    advanced_metrics = pd.read_csv('OUTPUT/model_results/advanced_metrics.csv')
-    
-    # Combine all metrics
-    all_metrics = pd.concat([baseline_metrics, advanced_metrics])
-    all_metrics = all_metrics.drop_duplicates(subset=['Model']).set_index('Model')
-    
-    print(f"Successfully loaded metrics for {len(all_metrics)} models.")
-    
-except Exception as e:
-    print(f"Error loading data: {e}")
-    print("Make sure you've run both baseline and advanced model scripts first.")
-    exit(1)
-
-# Try to load model predictions if saved, otherwise will need to re-predict
-predictions = {}
-try:
-    predictions = pd.read_csv('OUTPUT/model_results/all_predictions.csv')
-    print("Loaded saved predictions.")
-except:
-    print("No saved predictions found. Will attempt to load models and generate predictions.")
-    
-    # Helper function to load models and generate predictions
-    def load_and_predict(model_path, X_test):
-        try:
-            with open(model_path, 'rb') as f:
-                model = pickle.load(f)
-            return model.predict(X_test)
-        except:
-            print(f"Could not load or predict with model at {model_path}")
-            return None
-    
-    # Define features to use (same as in advanced models script)
-    target = 'target_next_day_return'
-    exclude_columns = ['Date', 'target_next_day_return', 'target_5d_return', 
-                      'target_next_day_up', 'target_5d_up']
-    feature_columns = [col for col in test_df.columns 
-                      if col not in exclude_columns and 
-                      test_df[col].dtype in ['float64', 'int64']]
-    
-    X_test = test_df[feature_columns].values
-    y_test = test_df[target].values
-    
-    # Load each model and generate predictions
-    model_files = {
-        'LR_SPY_Only': 'OUTPUT/model_results/lr_spy_only.pkl',
-        'LR_SPY_Lagged': 'OUTPUT/model_results/lr_spy_lagged.pkl',
-        'LR_SPY_VIX': 'OUTPUT/model_results/lr_spy_vix.pkl',
-        'RandomForest': 'OUTPUT/model_results/random_forest_model.pkl',
-        'XGBoost': 'OUTPUT/model_results/xgboost_model.pkl'
+    results = {
+        'Model': model_name,
+        'MAE': mae,
+        'RMSE': rmse,
+        'R²': r2,
+        'Directional_Accuracy': directional_accuracy
     }
     
-    # Create predictions DataFrame
-    predictions = pd.DataFrame({
-        'Date': test_df['Date'].values,
-        'Actual': y_test
-    })
-    
-    # Add predictions from each model
-    for model_name, model_path in model_files.items():
-        preds = load_and_predict(model_path, X_test)
-        if preds is not None:
-            predictions[model_name] = preds
-    
-    # Save predictions
-    predictions.to_csv('OUTPUT/model_results/all_predictions.csv', index=False)
-    print("Generated and saved model predictions.")
+    return results
 
-# 1. Create comprehensive model comparison
-print("\n1. Creating comprehensive model comparison...")
+# Load the feature-engineered data
+print("Loading feature-engineered data...")
+try:
+    df = pd.read_csv('DATA/processed/feature_data.csv')
+    df['Date'] = pd.to_datetime(df['Date'])
+    print(f"Successfully loaded data with {df.shape[0]} rows and {df.shape[1]} columns.")
+except Exception as e:
+    print(f"Error loading data: {e}")
+    exit(1)
 
-# Organize models by type for comparison
-model_categories = {
-    'Baseline Models': ['LR_SPY_Only', 'LR_SPY_Lagged', 'LR_SPY_VIX', 'ARIMA'],
-    'Advanced Models': ['RandomForest', 'XGBoost', 'Ensemble_Avg', 'XGBoost_Tuned']
+# Define the target variable
+target = 'target_next_day_return'
+
+# Prepare data for modeling - create train/test split 
+# Using same split method as baseline for consistency
+print("\nPreparing data for modeling...")
+train_size = int(0.8 * len(df))
+train_df = df.iloc[:train_size]
+test_df = df.iloc[train_size:]
+
+print(f"Training data size: {len(train_df)}, Test data size: {len(test_df)}")
+
+# Define features to use
+# Exclude date, target variables, and any redundant columns
+exclude_columns = ['Date', 'target_next_day_return', 'target_5d_return', 
+                  'target_next_day_up', 'target_5d_up']
+
+# For numeric features only
+feature_columns = [col for col in train_df.columns 
+                  if col not in exclude_columns and 
+                  train_df[col].dtype in ['float64', 'int64']]
+
+print(f"Using {len(feature_columns)} features for modeling")
+
+# Prepare the training and test sets
+X_train = train_df[feature_columns].values
+X_test = test_df[feature_columns].values
+y_train = train_df[target].values
+y_test = test_df[target].values
+
+# Store all model results for comparison
+all_results = []
+
+# Try loading baseline results if available
+try:
+    baseline_results = pd.read_csv('OUTPUT/model_results/baseline_metrics.csv')
+    print("\nLoaded baseline model results for comparison.")
+except:
+    print("\nNo baseline results found. Creating new results file.")
+    baseline_results = pd.DataFrame()
+
+# 1. Random Forest Model
+print("\n1. Training Random Forest model...")
+# Start with a simpler model for speed
+rf_params = {
+    'n_estimators': 100,
+    'max_depth': 10,
+    'min_samples_split': 5,
+    'random_state': 42
 }
 
-# Create a comparison plot for RMSE
-plt.figure(figsize=(14, 8))
-for i, (category, models) in enumerate(model_categories.items()):
-    # Filter to only include models that exist in our results
-    available_models = [m for m in models if m in all_metrics.index]
-    if available_models:
-        rmse_values = all_metrics.loc[available_models, 'RMSE']
-        bars = plt.bar(available_models, rmse_values, alpha=0.7, label=category)
-        
-        # Add value labels on bars
-        for bar in bars:
-            height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2., height + 0.0001,
-                    f'{height:.6f}', ha='center', va='bottom', rotation=45, fontsize=9)
+rf_model = RandomForestRegressor(**rf_params)
+rf_model.fit(X_train, y_train)
+y_pred_rf = rf_model.predict(X_test)
 
-plt.title('RMSE Comparison Across All Models')
+# Evaluate model
+results_rf = evaluate_model(y_test, y_pred_rf, "RandomForest")
+all_results.append(results_rf)
+print(f"Model: RandomForest, RMSE: {results_rf['RMSE']:.6f}, Directional Accuracy: {results_rf['Directional_Accuracy']:.4f}")
+
+# Save model
+with open('OUTPUT/model_results/random_forest_model.pkl', 'wb') as f:
+    pickle.dump(rf_model, f)
+
+# Feature importance for Random Forest
+feature_importance = pd.DataFrame({
+    'Feature': feature_columns,
+    'Importance': rf_model.feature_importances_
+})
+feature_importance = feature_importance.sort_values('Importance', ascending=False)
+
+# Plot feature importance
+plt.figure(figsize=(12, 8))
+sns.barplot(x='Importance', y='Feature', data=feature_importance.head(20))
+plt.title('Top 20 Features by Importance (Random Forest)')
+plt.tight_layout()
+plt.savefig('OUTPUT/figures/rf_feature_importance.png')
+print("Feature importance plot saved to OUTPUT/figures/rf_feature_importance.png")
+
+# 2. XGBoost Model
+print("\n2. Training XGBoost model...")
+xgb_params = {
+    'n_estimators': 100,
+    'learning_rate': 0.05,
+    'max_depth': 5,
+    'subsample': 0.8,
+    'colsample_bytree': 0.8,
+    'objective': 'reg:squarederror',
+    'random_state': 42
+}
+
+xgb_model = xgb.XGBRegressor(**xgb_params)
+xgb_model.fit(X_train, y_train)
+y_pred_xgb = xgb_model.predict(X_test)
+
+# Evaluate model
+results_xgb = evaluate_model(y_test, y_pred_xgb, "XGBoost")
+all_results.append(results_xgb)
+print(f"Model: XGBoost, RMSE: {results_xgb['RMSE']:.6f}, Directional Accuracy: {results_xgb['Directional_Accuracy']:.4f}")
+
+# Save model
+with open('OUTPUT/model_results/xgboost_model.pkl', 'wb') as f:
+    pickle.dump(xgb_model, f)
+
+# Feature importance for XGBoost
+xgb_importance = pd.DataFrame({
+    'Feature': feature_columns,
+    'Importance': xgb_model.feature_importances_
+})
+xgb_importance = xgb_importance.sort_values('Importance', ascending=False)
+
+# Plot feature importance
+plt.figure(figsize=(12, 8))
+sns.barplot(x='Importance', y='Feature', data=xgb_importance.head(20))
+plt.title('Top 20 Features by Importance (XGBoost)')
+plt.tight_layout()
+plt.savefig('OUTPUT/figures/xgb_feature_importance.png')
+print("Feature importance plot saved to OUTPUT/figures/xgb_feature_importance.png")
+
+# 3. Optional: Hyperparameter Tuning with Grid Search
+# Note: This is computationally intensive and commented out by default
+"""
+print("\n3. Hyperparameter tuning for XGBoost...")
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7],
+    'learning_rate': [0.01, 0.05, 0.1],
+    'subsample': [0.8, 1.0],
+    'colsample_bytree': [0.8, 1.0]
+}
+
+# Use time series cross-validation
+tscv = TimeSeriesSplit(n_splits=3)
+
+grid_search = GridSearchCV(
+    estimator=xgb.XGBRegressor(objective='reg:squarederror', random_state=42),
+    param_grid=param_grid,
+    scoring='neg_mean_squared_error',
+    cv=tscv,
+    verbose=1,
+    n_jobs=-1
+)
+
+grid_search.fit(X_train, y_train)
+print(f"Best parameters: {grid_search.best_params_}")
+best_xgb = grid_search.best_estimator_
+
+# Evaluate tuned model
+y_pred_best_xgb = best_xgb.predict(X_test)
+results_best_xgb = evaluate_model(y_test, y_pred_best_xgb, "XGBoost_Tuned")
+all_results.append(results_best_xgb)
+print(f"Model: XGBoost_Tuned, RMSE: {results_best_xgb['RMSE']:.6f}, Directional Accuracy: {results_best_xgb['Directional_Accuracy']:.4f}")
+
+# Save best model
+with open('OUTPUT/model_results/xgboost_tuned_model.pkl', 'wb') as f:
+    pickle.dump(best_xgb, f)
+"""
+
+# 4. Ensemble Model - Simple Average
+print("\n4. Creating ensemble model (average of RF and XGB predictions)...")
+# Simple averaging of predictions
+y_pred_ensemble = (y_pred_rf + y_pred_xgb) / 2
+
+# Evaluate ensemble
+results_ensemble = evaluate_model(y_test, y_pred_ensemble, "Ensemble_Avg")
+all_results.append(results_ensemble)
+print(f"Model: Ensemble_Avg, RMSE: {results_ensemble['RMSE']:.6f}, Directional Accuracy: {results_ensemble['Directional_Accuracy']:.4f}")
+
+# 5. Compare all advanced models
+# Convert results to DataFrame
+results_df = pd.DataFrame(all_results)
+results_df = results_df.set_index('Model')
+
+# Save results to CSV
+results_df.to_csv('OUTPUT/model_results/advanced_metrics.csv')
+
+# Combine with baseline results if available
+if not baseline_results.empty:
+    baseline_results = baseline_results.set_index('Model')
+    combined_results = pd.concat([baseline_results, results_df])
+    combined_results.to_csv('OUTPUT/model_results/all_model_metrics.csv')
+    print("\nCombined metrics with baseline models saved to OUTPUT/model_results/all_model_metrics.csv")
+
+# Create comparison visualization for all advanced models
+print("\nCreating advanced model comparison visualizations...")
+
+# Bar plot of RMSE
+plt.figure(figsize=(10, 6))
+results_df['RMSE'].plot(kind='bar', color='skyblue')
+plt.title('RMSE Comparison of Advanced Models')
 plt.ylabel('RMSE (lower is better)')
-plt.xlabel('Model')
-plt.xticks(rotation=45, ha='right')
-plt.legend()
-plt.grid(axis='y', linestyle='--', alpha=0.3)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
-plt.savefig('OUTPUT/figures/all_models_rmse_comparison.png')
+plt.savefig('OUTPUT/figures/advanced_rmse_comparison.png')
 
-# Create a comparison plot for Directional Accuracy
-plt.figure(figsize=(14, 8))
-for i, (category, models) in enumerate(model_categories.items()):
-    # Filter to only include models that exist in our results
-    available_models = [m for m in models if m in all_metrics.index]
-    if available_models:
-        acc_values = all_metrics.loc[available_models, 'Directional_Accuracy']
-        bars = plt.bar(available_models, acc_values, alpha=0.7, label=category)
-        
-        # Add value labels on bars
-        for bar in bars:
-            height = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2., height + 0.005,
-                    f'{height:.4f}', ha='center', va='bottom', rotation=45, fontsize=9)
-
-plt.title('Directional Accuracy Comparison Across All Models')
-plt.ylabel('Directional Accuracy (higher is better)')
-plt.xlabel('Model')
-plt.xticks(rotation=45, ha='right')
-plt.legend()
-plt.grid(axis='y', linestyle='--', alpha=0.3)
+# Bar plot of Directional Accuracy
+plt.figure(figsize=(10, 6))
+results_df['Directional_Accuracy'].plot(kind='bar', color='lightgreen')
+plt.title('Directional Accuracy Comparison of Advanced Models')
+plt.ylabel('Accuracy (higher is better)')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
-plt.savefig('OUTPUT/figures/all_models_accuracy_comparison.png')
+plt.savefig('OUTPUT/figures/advanced_accuracy_comparison.png')
 
-# 2. Test the hypothesis: Does VIX improve forecasting?
-print("\n2. Testing hypothesis: Does VIX improve forecasting?")
+# Plot predictions vs actual for the best model
+print("\nCreating prediction visualization for best advanced model...")
+# Determine best model by RMSE
+best_model_name = results_df['RMSE'].idxmin()
+best_model_preds = y_pred_ensemble  # Default to ensemble model
 
-# Group models by whether they use VIX or not
-spy_only_models = [m for m in all_metrics.index if 'SPY_Only' in m or 'SPY_Lagged' in m]
-vix_models = [m for m in all_metrics.index if m not in spy_only_models and m != 'ARIMA']
+if best_model_name == "RandomForest":
+    best_model_preds = y_pred_rf
+elif best_model_name == "XGBoost":
+    best_model_preds = y_pred_xgb
 
-# Calculate best metrics for each group
-if spy_only_models:
-    best_spy_only = spy_only_models[all_metrics.loc[spy_only_models, 'RMSE'].values.argmin()]
-    best_spy_rmse = all_metrics.loc[best_spy_only, 'RMSE']
-    best_spy_acc = all_metrics.loc[best_spy_only, 'Directional_Accuracy']
-else:
-    print("No SPY-only models found for comparison.")
-    best_spy_only = None
-    best_spy_rmse = None
-    best_spy_acc = None
+# Create actual vs predicted plot
+plt.figure(figsize=(12, 6))
+plt.plot(test_df['Date'], y_test, label='Actual Returns', color='blue', alpha=0.7)
+plt.plot(test_df['Date'], best_model_preds, label=f'Predicted ({best_model_name})', color='red', alpha=0.7)
+plt.title(f'Actual vs Predicted Returns - {best_model_name}')
+plt.xlabel('Date')
+plt.ylabel('Return')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('OUTPUT/figures/best_advanced_predictions.png')
 
-if vix_models:
-    best_vix = vix_models[all_metrics.loc[vix_models, 'RMSE'].values.argmin()]
-    best_vix_rmse = all_metrics.loc[best_vix, 'RMSE']
-    best_vix_acc = all_metrics.loc[best_vix, 'Directional_Accuracy']
-else:
-    print("No VIX-incorporating models found for comparison.")
-    best_vix = None
-    best_vix_rmse = None
-    best_vix_acc = None
+# And a scatterplot of actual vs predicted
+plt.figure(figsize=(10, 8))
+plt.scatter(y_test, best_model_preds, alpha=0.5)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 'r--')  # diagonal line
+plt.title(f'Actual vs Predicted Scatter - {best_model_name}')
+plt.xlabel('Actual Returns')
+plt.ylabel('Predicted Returns')
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('OUTPUT/figures/best_advanced_scatter.png')
 
-# Calculate improvement if both types of models are available
-if best_spy_rmse is not None and best_vix_rmse is not None:
-    rmse_improvement = (best_spy_rmse - best_vix_rmse) / best_spy_rmse * 100
-    acc_improvement = (best_vix_acc - best_spy_acc) / best_spy_acc * 100
-    
-    print(f"\nHypothesis Testing Results:")
-    print(f"Best model using SPY data only: {best_spy_only}")
-    print(f"  - RMSE: {best_spy_rmse:.6f}")
-    print(f"  - Directional Accuracy: {best_spy_acc:.4f}")
-    print(f"\nBest model incorporating VIX data: {best_vix}")
-    print(f"  - RMSE: {best_vix_rmse:.6f}")
-    print(f"  - Directional Accuracy: {best_vix_acc:.4f}")
-    print(f"\nImprovement by incorporating VIX data:")
-    print(f"  - RMSE reduction: {rmse_improvement:.2f}%")
-    print(f"  - Directional Accuracy increase: {acc_improvement:.2f}%")
-    
-    # Save hypothesis results
-    with open('OUTPUT/model_results/hypothesis_results.txt', 'w') as f:
-        f.write(f"Hypothesis Testing Results:\n")
-        f.write(f"Best model using SPY data only: {best_spy_only}\n")
-        f.write(f"  - RMSE: {best_spy_rmse:.6f}\n")
-        f.write(f"  - Directional Accuracy: {best_spy_acc:.4f}\n\n")
-        f.write(f"Best model incorporating VIX data: {best_vix}\n")
-        f.write(f"  - RMSE: {best_vix_rmse:.6f}\n")
-        f.write(f"  - Directional Accuracy: {best_vix_acc:.4f}\n\n")
-        f.write(f"Improvement by incorporating VIX data:\n")
-        f.write(f"  - RMSE reduction: {rmse_improvement:.2f}%\n")
-        f.write(f"  - Directional Accuracy increase: {acc_improvement:.2f}%\n")
-    
-    # Visualization for hypothesis testing
-    plt.figure(figsize=(12, 6))
-    
-    # RMSE comparison
-    plt.subplot(1, 2, 1)
-    models = [best_spy_only, best_vix]
-    rmse_values = [best_spy_rmse, best_vix_rmse]
-    bars = plt.bar(models, rmse_values, color=['skyblue', 'lightgreen'])
-    plt.title('RMSE Comparison: SPY-only vs. With VIX')
-    plt.ylabel('RMSE (lower is better)')
-    plt.xticks(rotation=45, ha='right')
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height + 0.0001,
-                f'{height:.6f}', ha='center', va='bottom', fontsize=9)
-    plt.grid(axis='y', linestyle='--', alpha=0.3)
-    
-    # Directional Accuracy comparison  
-    plt.subplot(1, 2, 2)
-    acc_values = [best_spy_acc, best_vix_acc]
-    bars = plt.bar(models, acc_values, color=['skyblue', 'lightgreen'])
-    plt.title('Directional Accuracy: SPY-only vs. With VIX')
-    plt.ylabel('Accuracy (higher is better)')
-    plt.xticks(rotation=45, ha='right')
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height + 0.005,
-                f'{height:.4f}', ha='center', va='bottom', fontsize=9)
-    plt.grid(axis='y', linestyle='--', alpha=0.3)
-    
-    plt.tight_layout()
-    plt.savefig('OUTPUT/figures/hypothesis_testing_results.png')
-    print(f"Hypothesis testing visualization saved to OUTPUT/figures/hypothesis_testing_results.png")
+print("\nAdvanced modeling complete!")
+print(f"Results saved to OUTPUT/model_results/advanced_metrics.csv")
+print(f"Visualizations saved in OUTPUT/figures/")
 
-# 3. Analyze model performance in different market conditions
-print("\n3. Analyzing model performance in different market conditions...")
-
-# We need the predictions DataFrame with Date column and VIX data to do this analysis
-if 'predictions' in locals() and 'Date' in predictions.columns and len(predictions) > 0:
-    # Merge predictions with test data to get VIX values
-    analysis_df = pd.merge(predictions, test_df[['Date', 'Price_VIX']], on='Date')
+# Create a results summary for our hypothesis
+print("\nAnalyzing results to test hypothesis...")
+try:
+    # If we have the combined results
+    if 'combined_results' in locals():
+        results = combined_results
+    else:
+        # Try to load all metrics
+        results = pd.read_csv('OUTPUT/model_results/all_model_metrics.csv')
+        results = results.set_index('Model')
     
-    # Define market conditions
-    vix_threshold = analysis_df['Price_VIX'].quantile(0.75)  # Top 25% as high volatility
-    analysis_df['Market_Condition'] = 'Normal'
-    analysis_df.loc[analysis_df['Price_VIX'] >= vix_threshold, 'Market_Condition'] = 'High_Volatility'
-    
-    # Function to calculate metrics by market condition
-    def evaluate_by_condition(df, condition):
-        """Calculate model performance metrics for a specific market condition."""
-        condition_df = df[df['Market_Condition'] == condition]
+    # Identify best model with SPY only
+    spy_only_models = [m for m in results.index if 'SPY_Only' in m or 'SPY_Lagged' in m]
+    if spy_only_models:
+        best_spy_only = spy_only_models[results.loc[spy_only_models, 'RMSE'].argmin()]
+        best_spy_rmse = results.loc[best_spy_only, 'RMSE']
         
-        if len(condition_df) == 0:
-            return pd.DataFrame()  # Return empty dataframe if no data points match condition
-            
-        model_columns = [col for col in condition_df.columns 
-                        if col not in ['Date', 'Actual', 'Price_VIX', 'Market_Condition']]
+        # Find best overall model
+        best_overall = results['RMSE'].idxmin()
+        best_overall_rmse = results.loc[best_overall, 'RMSE']
         
-        results = []
-        for model in model_columns:
-            # Skip if model predictions are not available
-            if model not in condition_df.columns:
-                continue
-                
-            y_true = condition_df['Actual'].values
-            y_pred = condition_df[model].values
-            
-            # Check if we have enough data points
-            if len(y_true) < 10:  # Arbitrary minimum for reliable statistics
-                print(f"Not enough data points for {model} in {condition} conditions.")
-                continue
-                
-            mae = mean_absolute_error(y_true, y_pred)
-            rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-            
-            # Directional accuracy
-            direction_true = (y_true > 0).astype(int)
-            direction_pred = (y_pred > 0).astype(int)
-            directional_accuracy = (direction_true == direction_pred).mean()
-            
-            results.append({
-                'Model': model,
-                'Market_Condition': condition,
-                'RMSE': rmse,
-                'MAE': mae,
-                'Directional_Accuracy': directional_accuracy,
-                'Sample_Size': len(y_true)
-            })
-            
-        return pd.DataFrame(results)
-    
-    # Calculate metrics for each market condition
-    normal_results = evaluate_by_condition(analysis_df, 'Normal')
-    high_vol_results = evaluate_by_condition(analysis_df, 'High_Volatility')
-    
-    # Combine results
-    condition_results = pd.concat([normal_results, high_vol_results])
-    
-    # Save results
-    condition_results.to_csv('OUTPUT/model_results/market_condition_performance.csv', index=False)
-    print(f"Performance by market condition saved to OUTPUT/model_results/market_condition_performance.csv")
-    
-    # Create visualization
-    if not condition_results.empty:
-        # Pivot data for easier plotting
-        rmse_pivot = condition_results.pivot(index='Model', columns='Market_Condition', values='RMSE')
-        acc_pivot = condition_results.pivot(index='Model', columns='Market_Condition', values='Directional_Accuracy')
+        # Calculate improvement
+        improvement = (best_spy_rmse - best_overall_rmse) / best_spy_rmse * 100
         
-        # Plot RMSE by market condition
-        plt.figure(figsize=(14, 6))
-        rmse_pivot.plot(kind='bar')
-        plt.title('RMSE by Market Condition')
-        plt.ylabel('RMSE (lower is better)')
-        plt.xlabel('Model')
-        plt.grid(axis='y', linestyle='--', alpha=0.3)
-        plt.legend(title='Market Condition')
-        plt.tight_layout()
-        plt.savefig('OUTPUT/figures/rmse_by_market_condition.png')
+        print(f"\nHypothesis Testing Results:")
+        print(f"Best model using SPY data only: {best_spy_only}, RMSE: {best_spy_rmse:.6f}")
+        print(f"Best overall model: {best_overall}, RMSE: {best_overall_rmse:.6f}")
+        print(f"Improvement by incorporating VIX data: {improvement:.2f}%")
         
-        # Plot Directional Accuracy by market condition
-        plt.figure(figsize=(14, 6))
-        acc_pivot.plot(kind='bar')
-        plt.title('Directional Accuracy by Market Condition')
-        plt.ylabel('Accuracy (higher is better)')
-        plt.xlabel('Model')
-        plt.grid(axis='y', linestyle='--', alpha=0.3)
-        plt.legend(title='Market Condition')
-        plt.tight_layout()
-        plt.savefig('OUTPUT/figures/accuracy_by_market_condition.png')
+        # Save this info
+        with open('OUTPUT/model_results/hypothesis_results.txt', 'w') as f:
+            f.write(f"Hypothesis Testing Results:\n")
+            f.write(f"Best model using SPY data only: {best_spy_only}, RMSE: {best_spy_rmse:.6f}\n")
+            f.write(f"Best overall model: {best_overall}, RMSE: {best_overall_rmse:.6f}\n")
+            f.write(f"Improvement by incorporating VIX data: {improvement:.2f}%\n")
         
-        print(f"Market condition visualizations saved to OUTPUT/figures/")
-else:
-    print("Cannot perform market condition analysis without model predictions and VIX data.")
-
-# 4. Create forecast visualization with best model
-print("\n4. Creating forecast visualization with best model...")
-
-# Determine overall best model
-best_model = all_metrics['RMSE'].idxmin()
-print(f"Overall best model: {best_model}")
-
-# Create a time series plot of the actual vs. predicted values for the best model
-if 'predictions' in locals() and best_model in predictions.columns:
-    plt.figure(figsize=(16, 8))
-    plt.plot(predictions['Date'], predictions['Actual'], label='Actual Returns', color='blue', linewidth=2, alpha=0.7)
-    plt.plot(predictions['Date'], predictions[best_model], label=f'Predicted ({best_model})', color='red', linewidth=2, alpha=0.7)
-    
-    # Add VIX to a secondary axis to show volatility
-    if 'Price_VIX' in test_df.columns:
-        ax1 = plt.gca()
-        ax2 = ax1.twinx()
-        ax2.fill_between(test_df['Date'], test_df['Price_VIX'], color='gray', alpha=0.2)
-        ax2.set_ylabel('VIX Index (volatility)', color='gray')
-        
-    plt.title(f'SPY Returns Forecast: Actual vs {best_model} Predictions')
-    plt.xlabel('Date')
-    plt.ylabel('Return')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig('OUTPUT/figures/forecast_plot.png')
-    print(f"Forecast visualization saved to OUTPUT/figures/forecast_plot.png")
-else:
-    print(f"Cannot create forecast visualization. Best model {best_model} predictions not available.")
-
-# 5. Generate summary report
-print("\n5. Generating summary report...")
-
-# Create a comprehensive summary document
-summary = f"""# SPY Price Prediction Model Evaluation
-
-## Project Summary
-This report summarizes the performance of various models for predicting SPY price movements using historical SPY and VIX data.
-
-## Models Evaluated
-{len(all_metrics)} models were evaluated, including baseline linear models and advanced machine learning approaches.
-
-## Performance Metrics
-The table below shows the performance metrics for all models:
-
-{all_metrics.to_markdown()}
-
-## Hypothesis Testing Results
-The primary hypothesis was that incorporating VIX data would improve SPY price forecasting accuracy.
-
-"""
-
-if 'rmse_improvement' in locals() and 'acc_improvement' in locals():
-    summary += f"""
-- Best model using SPY data only: {best_spy_only}
-  - RMSE: {best_spy_rmse:.6f}
-  - Directional Accuracy: {best_spy_acc:.4f}
-  
-- Best model incorporating VIX data: {best_vix}
-  - RMSE: {best_vix_rmse:.6f}
-  - Directional Accuracy: {best_vix_acc:.4f}
-  
-- Improvement by incorporating VIX data:
-  - RMSE reduction: {rmse_improvement:.2f}%
-  - Directional Accuracy increase: {acc_improvement:.2f}%
-"""
-
-# Add market condition analysis if available
-if 'condition_results' in locals() and not condition_results.empty:
-    summary += f"""
-## Performance in Different Market Conditions
-The models were also evaluated separately during normal market conditions and high volatility periods.
-
-{condition_results.to_markdown()}
-
-This analysis shows how model performance varies with market volatility.
-"""
-
-summary += f"""
-## Conclusion
-The analysis confirms that incorporating VIX data into predictive models for SPY price movements significantly improves forecasting accuracy. The {best_model} model provided the best overall performance with an RMSE of {all_metrics.loc[best_model, 'RMSE']:.6f}.
-
-These results validate our hypothesis that the VIX provides valuable information for SPY price prediction, especially during periods of market stress.
-"""
-
-# Save summary report
-with open('OUTPUT/model_results/evaluation_summary.md', 'w') as f:
-    f.write(summary)
-print(f"Summary report saved to OUTPUT/model_results/evaluation_summary.md")
-
-print("\nModel evaluation complete!")
-print("All results and visualizations have been saved to the OUTPUT directory.")
+        print("Hypothesis testing results saved to OUTPUT/model_results/hypothesis_results.txt")
+except Exception as e:
+    print(f"Could not complete hypothesis testing: {e}")
+    print("Complete the baseline models first or run evaluation script for full comparison.")

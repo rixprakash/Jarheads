@@ -38,6 +38,10 @@ except Exception as e:
     print(f"Error loading data: {e}")
     exit(1)
 
+# Check for NaN values in the original data
+print("\nChecking for NaN values in cleaned data:")
+print(df.isnull().sum())
+
 # Set date as index for time series operations
 df = df.sort_values('Date').set_index('Date')
 
@@ -60,11 +64,10 @@ for window in [5, 10, 21, 63]:  # 1 week, 2 weeks, 1 month, 3 months
     # Standard deviations (volatility)
     df[f'SPY_STD_{window}'] = df['Price_SPY'].rolling(window=window).std()
     df[f'VIX_STD_{window}'] = df['Price_VIX'].rolling(window=window).std()
-    
-    # Moving average convergence/divergence
-    if window == 5:  # Compare 5-day MA with 21-day MA
-        df['SPY_MACD'] = df['SPY_MA_5'] - df['SPY_MA_21']
-        df['VIX_MACD'] = df['VIX_MA_5'] - df['VIX_MA_21']
+
+# Calculate MACD after all moving averages have been created
+df['SPY_MACD'] = df['SPY_MA_5'] - df['SPY_MA_21']
+df['VIX_MACD'] = df['VIX_MA_5'] - df['VIX_MA_21']
 
 # 3. Price momentum (rate of change)
 print("Creating momentum indicators...")
@@ -114,16 +117,50 @@ print("Creating interaction features...")
 # VIX change × SPY change
 df['VIX_SPY_interaction'] = df['Change %_VIX'] * df['Change %_SPY']
 
-# 8. Clean up - drop rows with NaN values from lag creation
-print("Cleaning up dataset...")
-df_full = df.copy()  # Keep a copy with NaNs for reference
-df = df.dropna()
-print(f"Rows before NaN removal: {df_full.shape[0]}, after: {df.shape[0]}")
+# 8. Check NaN values BEFORE cleaning
+print("Checking for NaN values before cleaning:")
+nan_counts = df.isnull().sum()
+print(nan_counts[nan_counts > 0])  # Only show columns with NaNs
 
-# 9. Feature correlation analysis
+# 9. Handle NaN values more carefully
+print("Handling NaN values...")
+# Keep track of the original number of rows
+original_rows = len(df)
+
+# For lagged and rolling window features, NaNs at the beginning are expected
+# We'll trim the beginning of the dataset rather than dropping all rows with NaNs
+# Find the maximum window size used
+max_window = 63  # Maximum rolling window size used
+
+# Trim the dataset to remove the beginning NaN values from lag and rolling windows
+df_trimmed = df.iloc[max_window:].copy()
+print(f"Trimmed {max_window} rows from the beginning to remove NaNs from lag/rolling features")
+
+# For any remaining NaNs in the middle, fill with appropriate method
+# Forward fill for any remaining NaNs
+df_trimmed = df_trimmed.fillna(method='ffill')
+
+# Check if there are still any NaNs
+remaining_nans = df_trimmed.isnull().sum()
+if remaining_nans.sum() > 0:
+    print("Remaining NaN values after forward fill:")
+    print(remaining_nans[remaining_nans > 0])
+    
+    # For any stubborn NaNs, use column means for numerical columns
+    for col in df_trimmed.columns:
+        if df_trimmed[col].isnull().sum() > 0 and df_trimmed[col].dtype in ['float64', 'int64']:
+            col_mean = df_trimmed[col].mean()
+            df_trimmed[col] = df_trimmed[col].fillna(col_mean)
+            print(f"Filled remaining NaNs in {col} with mean: {col_mean}")
+
+# Remove NaNs from target variables (which are at the end of the dataset)
+df_final = df_trimmed.dropna(subset=['target_next_day_return', 'target_5d_return'])
+print(f"Rows: original: {original_rows}, after trimming: {len(df_trimmed)}, after target NaN removal: {len(df_final)}")
+
+# 10. Feature correlation analysis
 print("\nAnalyzing feature correlations...")
 # Correlation with target
-target_corr = df.corr()['target_next_day_return'].sort_values(ascending=False)
+target_corr = df_final.corr()['target_next_day_return'].sort_values(ascending=False)
 print("\nTop features correlated with next day return:")
 print(target_corr.head(10))
 print("\nBottom features correlated with next day return:")
@@ -132,27 +169,27 @@ print(target_corr.tail(10))
 # Create correlation heatmap for top features
 plt.figure(figsize=(12, 10))
 top_features = list(target_corr.head(15).index) + list(target_corr.tail(5).index)
-correlation_matrix = df[top_features].corr()
+correlation_matrix = df_final[top_features].corr()
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')
 plt.title('Correlation of Top Features with Target Variable')
 plt.tight_layout()
 plt.savefig('OUTPUT/figures/feature_correlation_heatmap.png')
 
-# 10. Save the feature-engineered dataset
+# 11. Save the feature-engineered dataset
 print("Saving feature-engineered dataset...")
-df.to_csv('DATA/processed/feature_data.csv', index=False)
-print(f"Feature engineering complete! Created {df.shape[1] - len(df_full.columns)} new features.")
-print(f"Feature data saved to DATA/processed/feature_data.csv with {df.shape[0]} rows and {df.shape[1]} columns.")
+df_final.to_csv('DATA/processed/feature_data.csv', index=False)
+print(f"Feature engineering complete! Created {df_final.shape[1] - len(df.columns)} new features.")
+print(f"Feature data saved to DATA/processed/feature_data.csv with {df_final.shape[0]} rows and {df_final.shape[1]} columns.")
 
-# 11. Create a feature summary
+# 12. Create a feature summary
 feature_summary = pd.DataFrame({
-    'Feature': df.columns,
-    'Type': df.dtypes,
-    'Missing': df.isnull().sum(),
-    'Unique': [df[col].nunique() for col in df.columns],
-    'Target_Correlation': [df[col].corr(df['target_next_day_return']) 
-                           if df[col].dtype in ['float64', 'int64'] else None 
-                           for col in df.columns]
+    'Feature': df_final.columns,
+    'Type': df_final.dtypes,
+    'Missing': df_final.isnull().sum(),
+    'Unique': [df_final[col].nunique() for col in df_final.columns],
+    'Target_Correlation': [df_final[col].corr(df_final['target_next_day_return']) 
+                          if df_final[col].dtype in ['float64', 'int64'] else None 
+                          for col in df_final.columns]
 })
 
 print("\nFeature summary (first 10 rows):")
