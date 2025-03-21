@@ -48,25 +48,47 @@ Project 2/
 ├── DATA/                   # Data files
 │   ├── CBOE Volatility Index Historical Data.csv  # Original VIX data
 │   ├── SPY ETF Stock Price History.csv            # Original SPY data
-│   ├── merged_data.csv     # Combined SPY/VIX dataset
+│   ├── merged_data.csv             # Combined SPY/VIX dataset
 │   ├── raw/
-│   │   ├── merged_data.csv # Combined SPY/VIX dataset
-│   │   └── data_dictionary.md # Column descriptions
-│   ├── processed/
-│   │   ├── clean_data.csv  # Cleaned dataset
-│   │   └── feature_data.csv # Dataset with engineered features
-│   └── Data_Appendix.pdf   # Detailed data description
+│   │   ├── merged_data.csv         # Combined SPY/VIX dataset
+│   │   └── data_dictionary.md      # Column descriptions
+│   └── processed/
+│       ├── clean_data.csv          # Cleaned dataset
+│       ├── feature_data.csv        # Dataset with engineered features
+│       └── feature_summary.csv     # Feature summary statistics
 │
 └── OUTPUT/                 # Results and visualizations
     ├── figures/
-    │   ├── time_series_plot.png   # VIX and SPY over time
-    │   ├── correlation_plot.png   # Correlation heatmap
-    │   ├── scatter_plot.png       # VIX vs SPY relationship
-    │   └── forecast_plot.png      # Model predictions
+    │   ├── Price_VIX_outliers_boxplot.png         # VIX outliers visualization
+    │   ├── accuracy_by_market_condition.png       # Performance by market regime
+    │   ├── advanced_accuracy_comparison.png       # Advanced models accuracy
+    │   ├── advanced_rmse_comparison.png           # Advanced models RMSE
+    │   ├── all_models_accuracy_comparison.png     # All models accuracy
+    │   ├── all_models_rmse_comparison.png         # All models RMSE
+    │   ├── baseline_accuracy_comparison.png       # Baseline models accuracy
+    │   ├── baseline_rmse_comparison.png           # Baseline models RMSE
+    │   ├── best_advanced_predictions.png          # Time series predictions
+    │   ├── best_advanced_scatter.png              # Scatter of predictions
+    │   ├── best_baseline_predictions.png          # Baseline predictions
+    │   ├── cleaned_data_verification.png          # Data quality check
+    │   ├── feature_correlation_heatmap.png        # Feature correlations
+    │   ├── hypothesis_testing_results.png         # Hypothesis test visualization
+    │   ├── rf_feature_importance.png              # RandomForest features
+    │   ├── rmse_by_market_condition.png           # RMSE by market regime
+    │   └── xgb_feature_importance.png             # XGBoost features
     └── model_results/
-        ├── baseline_metrics.csv   # Performance of baseline models
-        ├── advanced_metrics.csv   # Performance of advanced models
-        └── feature_importance.png # Feature importance visualization
+        ├── advanced_metrics.csv                   # Advanced models metrics
+        ├── all_model_metrics.csv                  # Combined model metrics
+        ├── all_predictions.csv                    # All model predictions
+        ├── baseline_metrics.csv                   # Baseline model metrics
+        ├── evaluation_summary.md                  # Project conclusions
+        ├── hypothesis_results.txt                 # Hypothesis test results
+        ├── lr_spy_lagged.pkl                      # Linear model with lags
+        ├── lr_spy_only.pkl                        # SPY-only model
+        ├── lr_spy_vix.pkl                         # Linear model with VIX
+        ├── market_condition_performance.csv       # Results by market regime
+        ├── random_forest_model.pkl                # RandomForest model file
+        └── xgboost_model.pkl                      # XGBoost model file
 ```
 
 ## Instructions for Reproducing Results
