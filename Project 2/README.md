@@ -97,6 +97,7 @@ Follow these steps to reproduce the analysis and results of this project:
    This generates comparative metrics and visualizations in OUTPUT/model_results.
 
 ### 6. Results Analysis
+   ```
 1. Review the model performance metrics in OUTPUT/model_results to determine which approach provides the best forecasting accuracy.
 2. Examine feature importance visualizations to understand which features contribute most to prediction performance.
 3. Compare models that use only SPY data with those that incorporate VIX data to test our central hypothesis.
@@ -116,6 +117,9 @@ Follow these steps to reproduce the analysis and results of this project:
 [6] R. Nicholson, "Tutorial: Time Series Forecasting with XGBoost," Kaggle, [Online]. Available: https://www.kaggle.com/code/robikscube/tutorial-time-series-forecasting-with-xgboost
 
 [7] "SPDR S&P 500 ETF Trust," VettaFi, [Online]. Available: https://etfdb.com/etf/SPY/
+   ```
+
+   ```
 Project 2/
 │
 ├── README.md               # Overview and instructions
@@ -152,3 +156,4 @@ Project 2/
         ├── baseline_metrics.csv   # Performance of baseline models
         ├── advanced_metrics.csv   # Performance of advanced models
         └── feature_importance.png # Feature importance visualization
+   ```
