@@ -31,8 +31,43 @@ This repository follows the TIER Protocol 4.0 structure and contains:
 
 ## Map of Documentation
 
-The following tree structure shows the organization of this project repository:
-
+```
+Project 2/
+│
+├── README.md               # Overview and instructions
+├── LICENSE.md              # MIT License
+│
+├── SCRIPTS/                # All source code
+│   ├── EDAcode.ipynb           # Exploratory Data Analysis notebook
+│   ├── 01_data_cleaning.py     # Initial data processing
+│   ├── 02_exploratory_analysis.py # EDA scripts
+│   ├── 03_feature_engineering.py  # Feature creation
+│   ├── 04_baseline_models.py   # Linear regression models
+│   ├── 05_advanced_models.py   # XGBoost and Random Forest models
+│   └── 06_model_evaluation.py  # Performance assessment
+│
+├── DATA/                   # Data files
+│   ├── CBOE Volatility Index Historical Data.csv  # Original VIX data
+│   ├── SPY ETF Stock Price History.csv            # Original SPY data
+│   ├── merged_data.csv     # Combined SPY/VIX dataset
+│   ├── raw/
+│   │   ├── merged_data.csv # Combined SPY/VIX dataset
+│   │   └── data_dictionary.md # Column descriptions
+│   ├── processed/
+│   │   ├── clean_data.csv  # Cleaned dataset
+│   │   └── feature_data.csv # Dataset with engineered features
+│   └── Data_Appendix.pdf   # Detailed data description
+│
+└── OUTPUT/                 # Results and visualizations
+    ├── figures/
+    │   ├── time_series_plot.png   # VIX and SPY over time
+    │   ├── correlation_plot.png   # Correlation heatmap
+    │   ├── scatter_plot.png       # VIX vs SPY relationship
+    │   └── forecast_plot.png      # Model predictions
+    └── model_results/
+        ├── baseline_metrics.csv   # Performance of baseline models
+        ├── advanced_metrics.csv   # Performance of advanced models
+        └── feature_importance.png # Feature importance visualization
 ```
 
 ## Instructions for Reproducing Results
@@ -97,7 +132,7 @@ Follow these steps to reproduce the analysis and results of this project:
    This generates comparative metrics and visualizations in OUTPUT/model_results.
 
 ### 6. Results Analysis
-   ```
+
 1. Review the model performance metrics in OUTPUT/model_results to determine which approach provides the best forecasting accuracy.
 2. Examine feature importance visualizations to understand which features contribute most to prediction performance.
 3. Compare models that use only SPY data with those that incorporate VIX data to test our central hypothesis.
@@ -117,43 +152,4 @@ Follow these steps to reproduce the analysis and results of this project:
 [6] R. Nicholson, "Tutorial: Time Series Forecasting with XGBoost," Kaggle, [Online]. Available: https://www.kaggle.com/code/robikscube/tutorial-time-series-forecasting-with-xgboost
 
 [7] "SPDR S&P 500 ETF Trust," VettaFi, [Online]. Available: https://etfdb.com/etf/SPY/
-   ```
 
-   ```
-Project 2/
-│
-├── README.md               # Overview and instructions
-├── LICENSE.md              # MIT License
-│
-├── SCRIPTS/                # All source code
-│   ├── EDAcode.ipynb           # Exploratory Data Analysis notebook
-│   ├── 01_data_cleaning.py     # Initial data processing
-│   ├── 02_exploratory_analysis.py # EDA scripts
-│   ├── 03_feature_engineering.py  # Feature creation
-│   ├── 04_baseline_models.py   # Linear regression models
-│   ├── 05_advanced_models.py   # XGBoost and Random Forest models
-│   └── 06_model_evaluation.py  # Performance assessment
-│
-├── DATA/                   # Data files
-│   ├── CBOE Volatility Index Historical Data.csv  # Original VIX data
-│   ├── SPY ETF Stock Price History.csv            # Original SPY data
-│   ├── merged_data.csv     # Combined SPY/VIX dataset
-│   ├── raw/
-│   │   ├── merged_data.csv # Combined SPY/VIX dataset
-│   │   └── data_dictionary.md # Column descriptions
-│   ├── processed/
-│   │   ├── clean_data.csv  # Cleaned dataset
-│   │   └── feature_data.csv # Dataset with engineered features
-│   └── Data_Appendix.pdf   # Detailed data description
-│
-└── OUTPUT/                 # Results and visualizations
-    ├── figures/
-    │   ├── time_series_plot.png   # VIX and SPY over time
-    │   ├── correlation_plot.png   # Correlation heatmap
-    │   ├── scatter_plot.png       # VIX vs SPY relationship
-    │   └── forecast_plot.png      # Model predictions
-    └── model_results/
-        ├── baseline_metrics.csv   # Performance of baseline models
-        ├── advanced_metrics.csv   # Performance of advanced models
-        └── feature_importance.png # Feature importance visualization
-   ```
