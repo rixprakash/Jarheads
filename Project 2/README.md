@@ -38,9 +38,8 @@ Project 2/
 ├── LICENSE.md              # MIT License
 │
 ├── SCRIPTS/                # All source code
-│   ├── EDAcode.ipynb           # Exploratory Data Analysis notebook
 │   ├── 01_data_cleaning.py     # Initial data processing
-│   ├── 02_exploratory_analysis.py # EDA scripts
+│   ├── 02_EDAcode.ipynb        # EDA scripts
 │   ├── 03_feature_engineering.py  # Feature creation
 │   ├── 04_baseline_models.py   # Linear regression models
 │   ├── 05_advanced_models.py   # XGBoost and Random Forest models
