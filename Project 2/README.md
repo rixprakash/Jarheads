@@ -121,9 +121,9 @@ Follow these steps to reproduce the analysis and results of this project:
    This will process the raw merged_data.csv and create clean_data.csv in the DATA/processed directory.
 
 ### 3. Exploratory Data Analysis
-1. Run the EDA script to generate visualizations:
+1. Run the EDA script (02_EDAcode.ipynb) to generate visualizations:
    ```
-   python SCRIPTS/02_exploratory_analysis.py
+   python SCRIPTS/02_EDAcode.py
    ```
    Alternatively, you can step through the EDAcode.ipynb notebook for an interactive analysis.
 2. Review the generated visualizations in the OUTPUT/figures directory to understand the relationship between SPY and VIX.
