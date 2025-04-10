@@ -8,4 +8,7 @@ scikit-learn
 torch
 torchvision
 tensorflow
-nltk 
+nltk
+scikit-image
+scipy
+tqdm 
