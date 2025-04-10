@@ -3,6 +3,10 @@ DATA/images/
 *.jpg
 *.jpeg
 *.png
+# Exception for DeepGuardDB_v1
+!DATA/DeepGuardDB_v1/**/*.jpg
+!DATA/DeepGuardDB_v1/**/*.jpeg
+!DATA/DeepGuardDB_v1/**/*.png
 
 # System files
 .DS_Store
