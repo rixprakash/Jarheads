@@ -1,0 +1,37 @@
+# Dataset files
+**/DATA/DeepGuardDB_v1/**/*.jpg
+**/DATA/DeepGuardDB_v1/**/*.jpeg
+**/DATA/DeepGuardDB_v1/**/*.png
+**/DATA/DeepGuardDB_v1/**/*.gif
+**/DATA/DeepGuardDB_v1/**/*.mp4
+**/DATA/DeepGuardDB_v1/**/*.mov
+**/DATA/DeepGuardDB_v1/**/*.webp
+**/DATA/DeepGuardDB_v1/SD_dataset/
+**/DATA/DeepGuardDB_v1/DALLE_dataset/
+**/DATA/DeepGuardDB_v1/GLIDE_dataset/
+**/DATA/DeepGuardDB_v1/IMAGEN_dataset/
+
+# System files
+.DS_Store
+__pycache__/
+*.pyc
+
+# Model checkpoints
+*.h5
+*.pth
+*.pkl
+*.safetensors
+*.npz
+*.npy
+*.onnx
+*.tflite
+*.pb
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment
+venv/
+env/
+*.env 

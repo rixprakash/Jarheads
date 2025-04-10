@@ -1,0 +1,21 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Source code
+*.py text
+*.ipynb text
+*.md text
+*.txt text
+*.json text
+
+# Exclude large data files from LFS
+**/DATA/DeepGuardDB_v1/**/*.jpg -filter=lfs -diff=lfs -merge=lfs -text
+**/DATA/DeepGuardDB_v1/**/*.jpeg -filter=lfs -diff=lfs -merge=lfs -text
+**/DATA/DeepGuardDB_v1/**/*.png -filter=lfs -diff=lfs -merge=lfs -text
+**/DATA/DeepGuardDB_v1/SD_dataset/* -filter=lfs -diff=lfs -merge=lfs -text
+**/DATA/DeepGuardDB_v1/DALLE_dataset/* -filter=lfs -diff=lfs -merge=lfs -text
+**/DATA/DeepGuardDB_v1/GLIDE_dataset/* -filter=lfs -diff=lfs -merge=lfs -text
+**/DATA/DeepGuardDB_v1/IMAGEN_dataset/* -filter=lfs -diff=lfs -merge=lfs -text
+
+DATA/DeepGuardDB_v1/json_files/*.json filter=lfs diff=lfs merge=lfs -text
+Project[[:space:]]1/OUTPUT/X_embeddings.npy filter=lfs diff=lfs merge=lfs -text
