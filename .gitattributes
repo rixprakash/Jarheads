@@ -9,3 +9,4 @@ DATA/DeepGuardDB_v1/IMAGEN_dataset/fake/* filter=lfs diff=lfs merge=lfs -text
 DATA/DeepGuardDB_v1/IMAGEN_dataset/real/* filter=lfs diff=lfs merge=lfs -text
 DATA/DeepGuardDB_v1/SD_dataset/fake/* filter=lfs diff=lfs merge=lfs -text
 DATA/DeepGuardDB_v1/SD_dataset/real/* filter=lfs diff=lfs merge=lfs -text 
+DATA/DeepGuardDB_v1/**/* filter=lfs diff=lfs merge=lfs -text
